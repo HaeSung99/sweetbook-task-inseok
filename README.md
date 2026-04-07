@@ -52,12 +52,12 @@ npm run start:dev
 
 ```bash
 cd ./frontend
-cp .env.example .env.local
+cp .env.example .env
 ```
 
 PowerShell: `Copy-Item .env.example .env.local`
 
-(백엔드 주소가 다르면 `.env.local`의 `NEXT_PUBLIC_API_BASE_URL` 수정)
+(백엔드 주소가 다르면 `.env`의 `NEXT_PUBLIC_API_BASE_URL` 수정)
 
 ```bash
 npm install
