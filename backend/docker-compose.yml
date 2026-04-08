@@ -2,50 +2,43 @@ services:
   mysql:
     image: mysql:8.0
     container_name: inseok-sweetbook-mysql
-    restart: unless-stopped
+    restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpass}
-      MYSQL_DATABASE: ${DB_DATABASE:-sweetbook}
-      MYSQL_USER: ${DB_USERNAME:-app}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-apppass}
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: sweetbook
+      MYSQL_USER: app
+      MYSQL_PASSWORD: apppass
     ports:
-      - "${MYSQL_PUBLISH_PORT:-3306}:3306"
+      - "3307:3306" # 로컬 포트 충돌 방지를 위해 3307 사용
     volumes:
       - mysql_data:/var/lib/mysql
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "mysqladmin ping -h 127.0.0.1 -uroot -p\"$$MYSQL_ROOT_PASSWORD\" || exit 1",
-        ]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-prootpass"]
       interval: 5s
-      timeout: 5s
-      retries: 30
-      start_period: 25s
+      retries: 10
 
   api:
     build: .
     container_name: inseok-sweetbook-api
-    restart: unless-stopped
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
     ports:
-      - "${PORT:-3001}:3001"
+      - "3001:3001"
     environment:
       NODE_ENV: production
       PORT: 3001
       DB_HOST: mysql
       DB_PORT: 3306
-      DB_USERNAME: ${DB_USERNAME:-app}
-      DB_PASSWORD: ${DB_PASSWORD:-apppass}
-      DB_DATABASE: ${DB_DATABASE:-sweetbook}
-      TYPEORM_SYNC: ${TYPEORM_SYNC:-true}
-      JWT_SECRET: ${JWT_SECRET:-change-me-in-docker}
-      SWEETBOOK_API_KEY: ${SWEETBOOK_API_KEY:-}
-      SWEETBOOK_API_BASE_URL: ${SWEETBOOK_API_BASE_URL:-https://api.sweetbook.com}
-      SWEETBOOK_DEFAULT_BOOK_SPEC_UID: ${SWEETBOOK_DEFAULT_BOOK_SPEC_UID:-SQUAREBOOK_HC}
-    depends_on:
-      mysql:
-        condition: service_healthy
+      DB_USERNAME: app
+      DB_PASSWORD: apppass
+      DB_DATABASE: sweetbook
+      TYPEORM_SYNC: "true"
+      JWT_SECRET: "your-very-secret-key"
+      SWEETBOOK_API_BASE_URL: "https://api.sweetbook.com"
+      SWEETBOOK_DEFAULT_BOOK_SPEC_UID: "SQUAREBOOK_HC"
 
 volumes:
   mysql_data:

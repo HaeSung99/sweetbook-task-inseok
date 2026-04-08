@@ -44,7 +44,7 @@ cd ./backend
 docker compose up -d mysql
 ```
 
-- 기본 포트: 호스트 `3306` → 컨테이너 `3306` (`MYSQL_PUBLISH_PORT`로 바꿀 수 있음)
+- 로컬 포트와 충돌을 피하기 위해 호스트 `3307`을 컨테이너 `3306`에 매핑합니다. 3306 포트를 사용하고 싶으시다면 .env 와 docker-compose.yml 의 PORT를 수정해주세요.
 - 계정·DB 이름은 `backend/docker-compose.yml` / `.env`와 맞춰 `backend/.env`의 `DB_*` 를 설정합니다.
 
 ### 2) 백엔드
