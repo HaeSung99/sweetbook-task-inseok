@@ -29,13 +29,13 @@ type MyOrdersListResponse = {
   items?: MyOrderItem[];
 };
 
-/** 내 구매 주문 목록 */
+/** 내 주문(요청) 목록 */
 async function fetchMyOrders() {
   const { data } = await api.get<MyOrdersListResponse>('/yearbook/orders');
   return data;
 }
 
-/** 구매 요청 취소(승인 대기는 즉시·환불, 주문 완료는 SweetBook 취소) */
+/** 주문 요청 취소(승인 대기는 즉시·환불, 주문 완료는 SweetBook 취소) */
 async function cancelMyOrder(requestId: string, cancelReason: string) {
   const { data } = await api.post<{ success: boolean; message?: string; balanceWon?: number }>(
     `/yearbook/orders/${encodeURIComponent(requestId)}/cancel`,
@@ -56,10 +56,10 @@ function statusLabel(status: string) {
   const map: Record<string, string> = {
     pending: '승인 대기',
     approved: '승인됨',
-    ordered: '결제 완료',
+    ordered: '주문 완료',
     failed: '주문 실패',
     rejected: '거절',
-    cancelled: '결제 취소됨',
+    cancelled: '주문 취소됨',
   };
   return map[status] ?? status;
 }
@@ -95,7 +95,6 @@ export default function OrdersPage() {
     setListError(null);
     try {
       const data = await fetchMyOrders();
-      console.log(data)
       if (data.success && Array.isArray(data.items)) setItems(data.items);
       else setListError('목록을 불러오지 못했습니다.');
     } catch {
@@ -124,8 +123,8 @@ export default function OrdersPage() {
       setActionMsg(
         res.success
           ? cancelModal.mode === 'pending'
-            ? '구매 요청을 취소했고 잔액이 환불되었습니다.'
-            : '결제 취소 요청을 보냈습니다.'
+            ? '주문 요청을 취소했고 잔액이 환불되었습니다.'
+            : '주문 취소 요청을 보냈습니다.'
           : res.message ?? '주문 취소에 실패했습니다.',
       );
       if (res.success) {
@@ -181,7 +180,7 @@ export default function OrdersPage() {
                   ) : null}
                   {row.status === 'cancelled' ? (
                     <span className="sb-fieldHint" style={{ color: 'var(--sb-muted)' }}>
-                      이 주문은 결제가 취소되었습니다.
+                      이 주문은 취소되었습니다.
                       {row.cancelReason ? ` (사유: ${row.cancelReason})` : ''}
                     </span>
                   ) : null}
@@ -231,7 +230,7 @@ export default function OrdersPage() {
             <h2 id="orders-cancel-title" className="sb-panelTitle">
               주문 취소
             </h2>
-            <p className="sb-panelNote">결제 취소를 요청합니다. 제작이 시작된 뒤에는 거절될 수 있습니다.</p>
+            <p className="sb-panelNote">주문 취소를 요청합니다. 제작이 시작된 뒤에는 거절될 수 있습니다.</p>
             <label className="sb-label">
               취소 사유
               <textarea className="sb-input" style={{ minHeight: 88, resize: 'vertical' }} value={cancelReasonInput} onChange={(e) => setCancelReasonInput(e.target.value)} rows={3} />
@@ -241,7 +240,7 @@ export default function OrdersPage() {
                 닫기
               </button>
               <button type="button" className="sb-btn sb-btnPrimary" disabled={cancelBusy} onClick={() => void onCancelConfirm()}>
-                {cancelBusy ? '처리 중…' : cancelModal.mode === 'pending' ? '요청 취소하기' : '결제 취소 요청'}
+                {cancelBusy ? '처리 중…' : cancelModal.mode === 'pending' ? '요청 취소하기' : '주문 취소 요청'}
               </button>
             </div>
           </div>

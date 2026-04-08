@@ -45,7 +45,7 @@ async function getAdminLayoutTemplates() {
   return data;
 }
 
-/** 관리자: 구매 요청(주문) 전체 목록 */
+/** 관리자: 주문 요청 전체 목록 */
 async function getAdminPurchaseRequests() {
   const { data } = await api.get<{ success: boolean; items?: AdminPurchaseItem[] }>('/admin/purchase-requests');
   return data;
@@ -71,7 +71,7 @@ async function deleteAdminLayoutTemplate(id: string) {
   return data;
 }
 
-/** 관리자: 구매 요청 승인(결제·주문 진행) */
+/** 관리자: 주문 요청 승인(SweetBook 주문 진행) */
 async function postApprovePurchaseRequest(id: string) {
   const { data } = await api.post<{ success: boolean; message?: string }>(
     `/admin/purchase-requests/${encodeURIComponent(id)}/approve`,
@@ -79,7 +79,7 @@ async function postApprovePurchaseRequest(id: string) {
   return data;
 }
 
-/** 관리자: 구매 요청 거절/취소 */
+/** 관리자: 주문 요청 거절/취소 */
 async function postCancelPurchaseRequest(id: string, cancelReason: string) {
   const { data } = await api.post<{ success: boolean; message?: string }>(
     `/admin/purchase-requests/${encodeURIComponent(id)}/cancel`,
@@ -107,7 +107,7 @@ function statusLabel(status: string) {
   return map[status] ?? status;
 }
 
-/** 관리자 전용 — 레이아웃 템플릿·구매 요청 승인/취소 */
+/** 관리자 전용 — 레이아웃 템플릿·주문 요청 승인/취소 */
 export default function AdminPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
@@ -292,7 +292,7 @@ export default function AdminPage() {
           <Link href="/">← 홈</Link>
         </p>
         <h1 className="sb-pageTitle">관리자</h1>
-        <p className="sb-pageLead">구매 요청을 승인하거나 취소하고, 표지·내지 레이아웃에 쓸 SweetBook 템플릿 UID를 등록할 수 있습니다.</p>
+        <p className="sb-pageLead">주문 요청을 승인하거나 취소하고, 표지·내지 레이아웃에 쓸 SweetBook 템플릿 UID를 등록할 수 있습니다.</p>
       </div>
 
       <section className="sb-panel">
@@ -393,7 +393,7 @@ export default function AdminPage() {
       ) : null}
 
       <section className="sb-panel">
-        <h2 className="sb-panelTitle">구매 승인 대기</h2>
+        <h2 className="sb-panelTitle">주문 승인 대기</h2>
         {actionMsg ? <p className="sb-formMsg">{actionMsg}</p> : null}
         {listLoading ? <p className="sb-muted">불러오는 중…</p> : null}
         {listError ? <p className="sb-error">{listError}</p> : null}

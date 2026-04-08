@@ -538,6 +538,28 @@ a:hover {
   padding: 28px 20px 72px;
 }
 
+/* 로그인·회원가입: 상단은 일반 페이지와 동일, 폼 열만 가로 가운데 */
+.sb-page.sb-page--auth {
+  max-width: none;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.sb-page--auth .sb-pageHead {
+  width: 100%;
+  max-width: 520px;
+  margin-bottom: 22px;
+  text-align: center;
+}
+
+.sb-page--auth .sb-panel {
+  width: 100%;
+  max-width: 520px;
+}
+
 .sb-pageHead {
   margin-bottom: 22px;
 }
@@ -1256,6 +1278,57 @@ a:hover {
   gap: 10px;
   margin-top: 8px;
   flex-wrap: wrap;
+}
+
+/* 주문 모달: 금액·잔액 요약 (라벨 ↔ 숫자 정렬) */
+.sb-priceSummary {
+  margin-top: 10px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  border: 1px solid var(--sb-border);
+  background: linear-gradient(180deg, rgba(255, 253, 248, 0.95), rgba(250, 248, 245, 0.5));
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.sb-priceSummaryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+}
+
+.sb-priceSummaryRow + .sb-priceSummaryRow {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(231, 229, 228, 0.85);
+}
+
+.sb-priceSummaryLabel {
+  flex-shrink: 0;
+  color: var(--sb-muted);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.sb-priceSummaryValue {
+  text-align: right;
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--sb-text);
+  letter-spacing: -0.02em;
+}
+
+.sb-priceSummaryValue--lg {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--sb-text);
+}
+
+.sb-priceSummaryFoot {
+  margin-top: 10px;
+  padding-top: 2px;
 }
 
 .sb-bookList {

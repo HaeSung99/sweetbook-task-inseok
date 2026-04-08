@@ -26,7 +26,7 @@ type PurchaseShippingBody = {
   quantity?: number;
 };
 
-/** 구매 견적: 수량 기준 금액·크레딧 조회 */
+/** 주문 견적: 수량 기준 금액·크레딧 조회 */
 async function postPurchaseEstimate(bookUid: string, quantity?: number) {
   const body = { quantity: quantity ?? 1 };
   const { data } = await api.post<PurchaseEstimateResult>(
@@ -36,7 +36,7 @@ async function postPurchaseEstimate(bookUid: string, quantity?: number) {
   return data;
 }
 
-/** 구매 확정: 배송지·수량으로 주문 제출 */
+/** 주문 요청 제출: 배송지·수량 */
 async function postPurchaseSubmit(bookUid: string, body: PurchaseShippingBody) {
   const { data } = await api.post<{ success: boolean; requestId?: string; message?: string }>(
     `/yearbook/books/${encodeURIComponent(bookUid)}/purchase/submit`,
@@ -74,7 +74,7 @@ type Props = {
   onClose: () => void;
 };
 
-/** 최종화된 학급 포토북 구매 — 수량·견적·배송지 입력 모달 */
+/** 최종화된 학급 포토북 주문 요청 — 수량·견적·배송지 입력 모달 */
 export function YearbookPurchaseModal({ open, bookUid, bookTitle, onClose }: Props) {
   const { user, refreshMe } = useAuth();
   const [phase, setPhase] = useState<Phase>('qty');
@@ -142,7 +142,7 @@ export function YearbookPurchaseModal({ open, bookUid, bookTitle, onClose }: Pro
     }
   }
 
-  /** 구매 확정: 배송지 포함 주문 제출 */
+  /** 주문 요청: 배송지 포함 제출 */
   async function onConfirmPurchase(e: React.FormEvent) {
     e.preventDefault();
     const q = parseOrderQuantity(quantityInput);
@@ -202,15 +202,8 @@ export function YearbookPurchaseModal({ open, bookUid, bookTitle, onClose }: Pro
         }
       >
         <h2 id="yearbook-purchase-title" className="sb-panelTitle">
-          구매 — {bookTitle}
+          주문 — {bookTitle}
         </h2>
-        <p className="sb-panelNote" style={{ fontSize: '0.9rem' }}>
-          주문 수량을 정한 뒤 「가격 확인하기」로 견적을 받고, 견적 창에서 배송지를 입력한 뒤 「구매확정하기」를 누르세요. (
-          <a href="https://api.sweetbook.com/docs/guides/orders/" target="_blank" rel="noreferrer">
-            주문/결제 가이드
-          </a>
-          )
-        </p>
 
         {phase === 'qty' ? (
           <>
@@ -250,10 +243,10 @@ export function YearbookPurchaseModal({ open, bookUid, bookTitle, onClose }: Pro
         {phase === 'done' ? (
           <>
             <p className="sb-formMsg" style={{ marginTop: 12 }}>
-              구매 요청이 접수되었습니다. 관리자 승인 후 주문이 진행됩니다.
+              주문 요청이 접수되었습니다. 관리자 승인 후 인쇄 주문이 진행됩니다.
             </p>
             <p className="sb-panelTitle" style={{ fontSize: '1.25rem', marginTop: 8 }}>
-              구매완료됨
+              주문 요청 완료됨
             </p>
             <div className="sb-modalActions" style={{ marginTop: 16 }}>
               <button type="button" className="sb-btn sb-btnPrimary" onClick={closeAll}>
@@ -296,40 +289,43 @@ export function YearbookPurchaseModal({ open, bookUid, bookTitle, onClose }: Pro
             onSubmit={onConfirmPurchase}
           >
             <h2 id="yearbook-purchase-price-title" className="sb-panelTitle">
-              결제 금액
+              주문 금액
             </h2>
-            <p className="sb-panelNote">
-              주문 수량 {qtyValid ?? '—'}권 기준입니다. 구매 확정 시 아래 금액이 서비스 잔액에서 차감됩니다.
-            </p>
+            <p className="sb-panelNote">주문 요청 시 아래 금액이 서비스 잔액에서 차감됩니다.</p>
             {displayWon !== null ? (
-              <div
-                className="sb-panel"
-                style={{ padding: '12px 0', boxShadow: 'none', border: '1px solid var(--sb-border, #e5e5e5)' }}
-              >
-                <p style={{ margin: '0 0 8px', fontSize: '1.05rem' }}>
-                  <strong>결제 금액</strong>: <strong>{displayWon.toLocaleString('ko-KR')}</strong>원
-                </p>
-                <p className="sb-fieldHint" style={{ margin: '0 0 4px' }}>
-                  내 서비스 잔액: <strong>{user ? user.balanceWon.toLocaleString('ko-KR') : '—'}</strong>원
-                </p>
+              <div className="sb-priceSummary">
+                <div className="sb-priceSummaryRow">
+                  <span className="sb-priceSummaryLabel">주문 금액</span>
+                  <span className="sb-priceSummaryValue sb-priceSummaryValue--lg">
+                    {displayWon.toLocaleString('ko-KR')}원
+                  </span>
+                </div>
+                <div className="sb-priceSummaryRow">
+                  <span className="sb-priceSummaryLabel">내 서비스 잔액</span>
+                  <span className="sb-priceSummaryValue">
+                    {user ? `${user.balanceWon.toLocaleString('ko-KR')}원` : '—'}
+                  </span>
+                </div>
                 {user && displayWon > user.balanceWon ? (
-                  <p className="sb-error" style={{ margin: 0 }}>
+                  <p className="sb-error sb-priceSummaryFoot" style={{ margin: 0 }}>
                     잔액이 부족합니다. 홈 또는 상단 메뉴에서 잔액을 충전해 주세요.
                   </p>
                 ) : null}
               </div>
             ) : money && typeof money.totalAmount === 'number' ? (
-              <div
-                className="sb-panel"
-                style={{ padding: '12px 0', boxShadow: 'none', border: '1px solid var(--sb-border, #e5e5e5)' }}
-              >
-                <p style={{ margin: '0 0 8px', fontSize: '1.05rem' }}>
-                  <strong>결제 금액</strong>:{' '}
-                  <strong>{(money.totalAmount * 2).toLocaleString('ko-KR')}</strong>원
-                </p>
-                <p className="sb-fieldHint" style={{ margin: '0 0 4px' }}>
-                  내 서비스 잔액: <strong>{user ? user.balanceWon.toLocaleString('ko-KR') : '—'}</strong>원
-                </p>
+              <div className="sb-priceSummary">
+                <div className="sb-priceSummaryRow">
+                  <span className="sb-priceSummaryLabel">주문 금액</span>
+                  <span className="sb-priceSummaryValue sb-priceSummaryValue--lg">
+                    {(money.totalAmount * 2).toLocaleString('ko-KR')}원
+                  </span>
+                </div>
+                <div className="sb-priceSummaryRow">
+                  <span className="sb-priceSummaryLabel">내 서비스 잔액</span>
+                  <span className="sb-priceSummaryValue">
+                    {user ? `${user.balanceWon.toLocaleString('ko-KR')}원` : '—'}
+                  </span>
+                </div>
               </div>
             ) : (
               <p className="sb-muted">견적이 조회되었습니다.</p>
@@ -412,7 +408,7 @@ export function YearbookPurchaseModal({ open, bookUid, bookTitle, onClose }: Pro
                         : undefined
                 }
               >
-                {submitBusy ? '처리 중…' : '구매확정하기'}
+                {submitBusy ? '처리 중…' : '주문 요청하기'}
               </button>
             </div>
           </form>

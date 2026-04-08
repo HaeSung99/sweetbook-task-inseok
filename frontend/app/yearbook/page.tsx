@@ -246,13 +246,13 @@ export default function YearbookListPage() {
                       type="button"
                       className="sb-btn sb-btnSecondary"
                       disabled={!finalized}
-                      title={finalized ? undefined : '최종화(완성)된 책만 구매할 수 있습니다.'}
+                      title={finalized ? undefined : '최종화(완성)된 책만 주문할 수 있습니다.'}
                       onClick={() => {
                         if (!finalized) return;
                         setPurchaseTarget({ uid: row.photobookUid, title });
                       }}
                     >
-                      구매하기
+                      주문하기
                     </button>
                   </div>
                 </li>

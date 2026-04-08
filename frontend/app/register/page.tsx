@@ -44,13 +44,13 @@ export default function RegisterPage() {
   }
 
   return (
-    <main className="sb-page">
+    <main className="sb-page sb-page--auth">
       <div className="sb-pageHead">
         <h1 className="sb-pageTitle">회원가입</h1>
         <p className="sb-pageLead">계정을 만들고 학급 포토북 서비스를 시작하세요.</p>
       </div>
 
-      <section className="sb-panel" style={{ maxWidth: 520 }}>
+      <section className="sb-panel">
         <form className="sb-formWide" onSubmit={onSubmit}>
           <label className="sb-label">
             이메일
