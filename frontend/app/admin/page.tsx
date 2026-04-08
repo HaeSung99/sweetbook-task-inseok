@@ -88,6 +88,21 @@ async function postCancelPurchaseRequest(id: string, cancelReason: string) {
   return data;
 }
 
+type SweetbookProxyPayload = {
+  success: boolean;
+  message?: string;
+  sweetbookStatus?: number;
+  response?: unknown;
+};
+
+/** 관리자: 백엔드 → SweetBook GET /v1/orders/{orderUid} */
+async function getAdminSweetbookOrderDetail(orderUid: string) {
+  const { data } = await api.get<SweetbookProxyPayload>(
+    `/admin/sweetbook-orders/${encodeURIComponent(orderUid)}`,
+  );
+  return data;
+}
+
 /** 한국 시간으로 표시 */
 function formatDate(iso?: string) {
   if (!iso) return '—';
@@ -124,6 +139,11 @@ export default function AdminPage() {
   const [companyBalanceWon, setCompanyBalanceWon] = useState<number | null>(null);
   const [creditsError, setCreditsError] = useState<string | null>(null);
   const [creditsLoading, setCreditsLoading] = useState(false);
+
+  /** 전체 이력 행(id)별 SweetBook 주문 상세 캐시 */
+  const [orderDetailOpenId, setOrderDetailOpenId] = useState<string | null>(null);
+  const [orderDetailByPrId, setOrderDetailByPrId] = useState<Record<string, SweetbookProxyPayload>>({});
+  const [orderDetailLoadingId, setOrderDetailLoadingId] = useState<string | null>(null);
 
   const [tplItems, setTplItems] = useState<AdminLayoutTemplateRow[]>([]);
   const [tplLoading, setTplLoading] = useState(false);
@@ -177,6 +197,29 @@ export default function AdminPage() {
       setCreditsError('불러오지 못했습니다. SWEETBOOK_API_KEY·네트워크를 확인해 주세요.');
     } finally {
       setCreditsLoading(false);
+    }
+  }
+
+  async function toggleSweetbookOrderDetail(row: AdminPurchaseItem) {
+    const uid = row.sweetbookOrderUid?.trim();
+    if (!uid) return;
+    if (orderDetailOpenId === row.id) {
+      setOrderDetailOpenId(null);
+      return;
+    }
+    setOrderDetailOpenId(row.id);
+    if (orderDetailByPrId[row.id]) return;
+    setOrderDetailLoadingId(row.id);
+    try {
+      const data = await getAdminSweetbookOrderDetail(uid);
+      setOrderDetailByPrId((prev) => ({ ...prev, [row.id]: data }));
+    } catch {
+      setOrderDetailByPrId((prev) => ({
+        ...prev,
+        [row.id]: { success: false, message: '상세 조회에 실패했습니다.' },
+      }));
+    } finally {
+      setOrderDetailLoadingId(null);
     }
   }
 
@@ -413,9 +456,10 @@ export default function AdminPage() {
                     신청자 {row.requesterEmail ?? row.userId} · {row.recipientName} · {row.recipientPhone}
                   </span>
                   <span className="sb-fieldHint">
-                    이용자 부담(2배){' '}
-                    {row.userChargeWon != null ? `${row.userChargeWon.toLocaleString('ko-KR')}원` : '—'} · API 견적 원가{' '}
-                    {row.apiAmountWon != null ? `${row.apiAmountWon.toLocaleString('ko-KR')}원` : '—'}
+                    이용자 비용: {row.userChargeWon != null ? `${row.userChargeWon.toLocaleString('ko-KR')}원` : '—'}
+                  </span>
+                  <span className="sb-fieldHint">
+                    원가: {row.apiAmountWon != null ? `${row.apiAmountWon.toLocaleString('ko-KR')}원` : '—'}
                   </span>
                 </div>
                 <div className="sb-bookCardActions" style={{ flexWrap: 'wrap', gap: 8 }}>
@@ -442,62 +486,101 @@ export default function AdminPage() {
 
       <section className="sb-panel">
         <h2 className="sb-panelTitle">전체 이력</h2>
+        <p className="sb-panelNote">주문 UID가 있으면 SweetBook 주문 상세를 백엔드 경유로 조회할 수 있습니다.</p>
         {!listLoading && items.length > 0 ? (
           <ul className="sb-bookList">
-            {items.map((row) => (
-              <li key={row.id} className="sb-bookCard" style={{ alignItems: 'stretch' }}>
-                <div className="sb-bookCardMain" style={{ gap: 6 }}>
-                  <span className="sb-bookTitle">
-                    {row.bookTitle?.trim() ? `「${row.bookTitle.trim()}」` : '「제목 없음」'} · 수량 {row.quantity ?? 1}권
-                  </span>
-                  <span className="sb-fieldHint">
-                    책 UID <code>{row.bookUid}</code>
-                  </span>
-                  <span className="sb-fieldHint">상태 {statusLabel(row.status)}</span>
-                  <span className="sb-fieldHint">
-                    이용자 부담(2배){' '}
-                    {row.userChargeWon != null ? `${row.userChargeWon.toLocaleString('ko-KR')}원` : '—'} · API 견적 원가{' '}
-                    {row.apiAmountWon != null ? `${row.apiAmountWon.toLocaleString('ko-KR')}원` : '—'}
-                  </span>
-                  {row.sweetbookOrderUid ? (
-                    <span className="sb-fieldHint">
-                      주문 UID <code>{row.sweetbookOrderUid}</code>
+            {items.map((row) => {
+              const detailOpen = orderDetailOpenId === row.id;
+              const detail = orderDetailByPrId[row.id];
+              const detailLoading = orderDetailLoadingId === row.id;
+              return (
+                <li key={row.id} className="sb-bookCard" style={{ alignItems: 'stretch', flexWrap: 'wrap' }}>
+                  <div className="sb-bookCardMain" style={{ gap: 6 }}>
+                    <span className="sb-bookTitle">
+                      {row.bookTitle?.trim() ? `「${row.bookTitle.trim()}」` : '「제목 없음」'} · 수량 {row.quantity ?? 1}권
                     </span>
+                    <span className="sb-fieldHint">
+                      책 UID <code>{row.bookUid}</code>
+                    </span>
+                    <span className="sb-fieldHint">상태 {statusLabel(row.status)}</span>
+                    <span className="sb-fieldHint">
+                      이용자 비용: {row.userChargeWon != null ? `${row.userChargeWon.toLocaleString('ko-KR')}원` : '—'}
+                    </span>
+                    <span className="sb-fieldHint">
+                      원가: {row.apiAmountWon != null ? `${row.apiAmountWon.toLocaleString('ko-KR')}원` : '—'}
+                    </span>
+                    {row.sweetbookOrderUid ? (
+                      <span className="sb-fieldHint">
+                        주문 UID <code>{row.sweetbookOrderUid}</code>
+                      </span>
+                    ) : null}
+                    {row.cancelReason ? <span className="sb-fieldHint">취소 사유 {row.cancelReason}</span> : null}
+                    {row.lastError ? <span className="sb-error">{row.lastError}</span> : null}
+                    <span className="sb-fieldHint">생성 {formatDate(row.createdAt)}</span>
+                  </div>
+                  <div className="sb-bookCardActions" style={{ flexWrap: 'wrap', gap: 8 }}>
+                    {row.sweetbookOrderUid ? (
+                      <button
+                        type="button"
+                        className="sb-btn sb-btnSecondary"
+                        disabled={detailLoading}
+                        onClick={() => void toggleSweetbookOrderDetail(row)}
+                      >
+                        {detailLoading ? '불러오는 중…' : detailOpen ? '상세 접기' : 'SweetBook 상세보기'}
+                      </button>
+                    ) : null}
+                    {row.status === 'pending' ? (
+                      <button
+                        type="button"
+                        className="sb-btn sb-btnSecondary"
+                        onClick={() => {
+                          setCancelReasonInput('관리자 취소');
+                          setCancelModal({ id: row.id });
+                        }}
+                      >
+                        요청 취소
+                      </button>
+                    ) : null}
+                    {row.status === 'ordered' && row.sweetbookOrderUid ? (
+                      <button
+                        type="button"
+                        className="sb-btn sb-btnSecondary"
+                        onClick={() => {
+                          setCancelReasonInput('고객 변심');
+                          setCancelModal({ id: row.id });
+                        }}
+                      >
+                        주문 취소
+                      </button>
+                    ) : null}
+                  </div>
+                  {detailOpen && row.sweetbookOrderUid ? (
+                    <div style={{ width: '100%', flexBasis: '100%', marginTop: 8 }}>
+                      {detailLoading ? <p className="sb-muted">SweetBook 응답을 불러오는 중…</p> : null}
+                      {!detailLoading && detail ? (
+                        detail.success ? (
+                          <pre
+                            style={{
+                              margin: 0,
+                              padding: 12,
+                              fontSize: 12,
+                              overflow: 'auto',
+                              maxHeight: 360,
+                              background: 'var(--sb-surface-muted, #f4f4f5)',
+                              borderRadius: 8,
+                            }}
+                          >
+                            {JSON.stringify(detail.response ?? detail, null, 2)}
+                          </pre>
+                        ) : (
+                          <p className="sb-error">{detail.message ?? '상세 조회 실패'}</p>
+                        )
+                      ) : null}
+                    </div>
                   ) : null}
-                  {row.cancelReason ? <span className="sb-fieldHint">취소 사유 {row.cancelReason}</span> : null}
-                  {row.lastError ? <span className="sb-error">{row.lastError}</span> : null}
-                  <span className="sb-fieldHint">생성 {formatDate(row.createdAt)}</span>
-                </div>
-                {row.status === 'pending' ? (
-                  <div className="sb-bookCardActions">
-                    <button
-                      type="button"
-                      className="sb-btn sb-btnSecondary"
-                      onClick={() => {
-                        setCancelReasonInput('관리자 취소');
-                        setCancelModal({ id: row.id });
-                      }}
-                    >
-                      요청 취소
-                    </button>
-                  </div>
-                ) : null}
-                {row.status === 'ordered' && row.sweetbookOrderUid ? (
-                  <div className="sb-bookCardActions">
-                    <button
-                      type="button"
-                      className="sb-btn sb-btnSecondary"
-                      onClick={() => {
-                        setCancelReasonInput('고객 변심');
-                        setCancelModal({ id: row.id });
-                      }}
-                    >
-                      주문 취소
-                    </button>
-                  </div>
-                ) : null}
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
         ) : null}
       </section>

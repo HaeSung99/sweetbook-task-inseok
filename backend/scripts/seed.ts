@@ -1,12 +1,15 @@
 /**
  * 로컬/새 DB에 사용자 계정·잔액 등을 넣습니다. SweetBook API는 호출하지 않습니다.
  *
- * SweetBook에서 가져와야 하는 값(템플릿 UID)은 .env에 넣은 뒤 실행하면
- * `layout_templates` 행만 추가됩니다. book_uids / 주문은 비워 둡니다.
+ * `layout_templates`에 표지·내지 템플릿 UID를 넣습니다. 표지·내지 각각 **시드 기본 UID**가 있으며,
+ * `.env`로 덮어쓰거나(표지) 내지는 **추가** UID를 더할 수 있습니다. book_uids / 주문은 비워 둡니다.
  *
  * 사용: backend 폴더에서 `npm run seed`
  *
  * 기본 계정: .env의 SEED_ADMIN_*, SEED_USER_* 값 사용
+ *
+ * 템플릿 UID: `.env.example` 에 표지·내지 기본 UID가 적혀 있음. 변수가 비어 있으면 코드 상수
+ * (표지 4MY2fokVjkeY, 내지 2mi1ao0Z4Vxl)로 보완합니다. 내지는 기본 UID에 SEED_CONTENT_* 추가값을 합쳐 등록합니다.
  *
  * 선택 .env:
  *   SEED_USER_BALANCE_WON=500000
@@ -21,6 +24,10 @@ import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
 
 config({ path: resolve(__dirname, '../.env') });
+
+/** 시드 시 항상 등록하는 SweetBook 레이아웃 템플릿 UID */
+const DEFAULT_SEED_COVER_TEMPLATE_UID = '4MY2fokVjkeY';
+const DEFAULT_SEED_CONTENT_TEMPLATE_UIDS = ['2mi1ao0Z4Vxl'] as const;
 
 function requiredEnv(name: string): string {
   const v = process.env[name]?.trim();
@@ -88,48 +95,46 @@ async function main() {
     `(잔액 ${userBalance.toLocaleString('ko-KR')}원)`,
   );
 
-  const coverUid = process.env.SEED_COVER_TEMPLATE_UID?.trim();
+  const coverUid =
+    process.env.SEED_COVER_TEMPLATE_UID?.trim() || DEFAULT_SEED_COVER_TEMPLATE_UID;
   const contentUids = [
-    process.env.SEED_CONTENT_TEMPLATE_UID_1?.trim(),
-    process.env.SEED_CONTENT_TEMPLATE_UID_2?.trim(),
-  ].filter((v): v is string => !!v);
+    ...new Set(
+      [
+        ...DEFAULT_SEED_CONTENT_TEMPLATE_UIDS,
+        process.env.SEED_CONTENT_TEMPLATE_UID_1?.trim(),
+        process.env.SEED_CONTENT_TEMPLATE_UID_2?.trim(),
+      ].filter((v): v is string => !!v),
+    ),
+  ];
 
-  if (coverUid) {
+  const coverRow = await ds.query(
+    'SELECT id FROM layout_templates WHERE kind = ? AND template_uid = ? LIMIT 1',
+    ['cover', coverUid],
+  );
+  if (!Array.isArray(coverRow) || coverRow.length === 0) {
+    await ds.query(
+      `INSERT INTO layout_templates (id, kind, template_uid, created_at) VALUES (UUID(), ?, ?, NOW())`,
+      ['cover', coverUid],
+    );
+    console.log('[seed] 표지 템플릿 등록:', coverUid);
+  } else {
+    console.log('[seed] 표지 템플릿 이미 있음:', coverUid);
+  }
+
+  for (const contentUid of contentUids) {
     const row = await ds.query(
       'SELECT id FROM layout_templates WHERE kind = ? AND template_uid = ? LIMIT 1',
-      ['cover', coverUid],
+      ['content', contentUid],
     );
     if (!Array.isArray(row) || row.length === 0) {
       await ds.query(
         `INSERT INTO layout_templates (id, kind, template_uid, created_at) VALUES (UUID(), ?, ?, NOW())`,
-        ['cover', coverUid],
-      );
-      console.log('[seed] 표지 템플릿 등록:', coverUid);
-    } else {
-      console.log('[seed] 표지 템플릿 이미 있음:', coverUid);
-    }
-  } else {
-    console.log('[seed] SEED_COVER_TEMPLATE_UID 없음 → 표지 레이아웃 생략');
-  }
-
-  if (contentUids.length > 0) {
-    for (const contentUid of contentUids) {
-      const row = await ds.query(
-        'SELECT id FROM layout_templates WHERE kind = ? AND template_uid = ? LIMIT 1',
         ['content', contentUid],
       );
-      if (!Array.isArray(row) || row.length === 0) {
-        await ds.query(
-          `INSERT INTO layout_templates (id, kind, template_uid, created_at) VALUES (UUID(), ?, ?, NOW())`,
-          ['content', contentUid],
-        );
-        console.log('[seed] 내지 템플릿 등록:', contentUid);
-      } else {
-        console.log('[seed] 내지 템플릿 이미 있음:', contentUid);
-      }
+      console.log('[seed] 내지 템플릿 등록:', contentUid);
+    } else {
+      console.log('[seed] 내지 템플릿 이미 있음:', contentUid);
     }
-  } else {
-    console.log('[seed] SEED_CONTENT_TEMPLATE_UID_1, _2 없음 → 내지 레이아웃 생략');
   }
 
   console.log('[seed] 완료. book_uids·주문은 비어 있음 — SweetBook에서 책 생성 후 목록에 붙습니다.');

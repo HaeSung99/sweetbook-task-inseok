@@ -19,6 +19,13 @@ export class AdminPurchaseController {
     return this.yearbook.getCompanyCredits(req.user.userId, req.user.role);
   }
 
+  // 관리자 기능: SweetBook 주문 상세 (GET /v1/orders/{orderUid})
+  @Get('sweetbook-orders/:orderUid')
+  @UseGuards(JwtAuthGuard)
+  sweetbookOrderDetail(@Req() req: AuthedRequest, @Param('orderUid') orderUid: string) {
+    return this.yearbook.getSweetbookOrderDetailForAdmin(req.user.userId, req.user.role, orderUid);
+  }
+
   // 관리자 기능: 구매 요청 목록 조회
   @Get('purchase-requests')
   @UseGuards(JwtAuthGuard)

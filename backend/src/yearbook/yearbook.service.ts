@@ -640,4 +640,16 @@ export class YearbookService {
     }
     return { success: true as const, balance: Math.floor(bal) };
   }
+
+  /** 관리자 기능: SweetBook GET /orders/{orderUid} — 주문 상세 */
+  async getSweetbookOrderDetailForAdmin(_adminUserId: string, role: string, orderUid: string) {
+    if (role !== 'admin') {
+      throw new ForbiddenException('관리자만 접근할 수 있습니다.');
+    }
+    const uid = orderUid?.trim();
+    if (!uid) {
+      return { success: false as const, message: 'orderUid가 없습니다.' };
+    }
+    return this.partner.orderDetail(uid);
+  }
 }
