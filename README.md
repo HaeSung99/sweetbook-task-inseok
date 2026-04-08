@@ -83,15 +83,9 @@ npm run dev
 |------|------|
 | `backend/` | Nest 앱 — `auth/`, `yearbook/`, `sweetbook/`, `test/`, `entities/`, `scripts/seed.ts` |
 | `frontend/` | Next.js 앱 — `app/`, `components/`, `contexts/`, `lib/api.ts` |
-| `docs/` | 문서 인덱스 ([`docs/README.md`](./docs/README.md)), 이미지·파일명 규칙은 [`docs/image/README.md`](./docs/image/README.md) |
-
-## 이용자·관리자 흐름
-
-이미지는 [`docs/image/`](./docs/image/) 에 두고, 파일명 규칙은 [`docs/image/README.md`](./docs/image/README.md) 를 참고합니다.
+| `docs/image/` | **README에 넣을 이미지**를 두는 폴더 (흐름·화면 스크린샷 등) |
 
 ### 전체 흐름 (Mermaid)
-
-소스는 [`docs/image/flow.mmd`](./docs/image/flow.mmd) 에 두었습니다. PNG로 내보낼 때는 같은 내용으로 `docs/image/flow-mermaid.png` 를 생성해 두면 아래 이미지가 표시됩니다.
 
 ```mermaid
 flowchart TB
@@ -126,14 +120,11 @@ flowchart TB
   V -->|승인 시| SO[SweetBook 인쇄 주문]
 ```
 
-- **템플릿**: 관리자가 **SweetBook**에서 템플릿을 만든 뒤, 확인한 **UID를 백엔드에 등록**하면 서버가 보관하고, **등록된 종류만** 이용자 표지·내지 화면에 **목록 API**로 내려줍니다.  
-- 관리자 화면에서는 위 외에도 **회사 크레딧 조회** 등을 둘 수 있습니다.
-
-![전체 흐름 (Mermaid)](docs/image/flow-mermaid.png)
+- **템플릿**: 관리자가 **SweetBook**에서 템플릿을 만든 뒤, 확인한 **UID를 백엔드에 등록**하면 서버가 보관하고, **등록된 종류만** 이용자 표지·내지 화면에 **목록 API**로 내려줍니다.
 
 ### 이용자 흐름
 
-화면 순서에 맞춰 스크린샷을 붙입니다. (아래 번호·파일은 예시이며, 단계를 줄이면 해당 항목만 지우면 됩니다.)
+화면 순서에 맞춰 스크린샷을 붙입니다.
 
 #### 1. 메인 페이지
 
@@ -187,20 +178,14 @@ flowchart TB
 
 ![1. 관리자 페이지](docs/image/admin-page.png)
 
-#### 2. 레이아웃 템플릿 만들기 (SweetBook)
+#### 2. SweetBook 내 템플릿 (SweetBook)
 
-SweetBook 쪽에서 표지·내지 템플릿을 생성하고 UID를 확인하는 화면.
+SweetBook 쪽에서 표지·내지 템플릿을 생성, 관리 하는 화면.
 
-![2. SweetBook에서 템플릿 만들기](docs/image/admin-sweetbook-template.png)
+![2. SweetBook에서 템플릿 만들기](docs/image/admin-sweetbook-template1.png)
 
 #### 3. 레이아웃 템플릿 등록 (백엔드)
 
-확인한 템플릿 UID를 백엔드(관리자 화면)에 등록·보관하는 화면.
+SweetBook 쪽에서 템플릿 UID를 복사하여 관리자 페이지에 등록
 
-![3. 백엔드에 템플릿 UID 등록](docs/image/admin-layout-template.png)
-
-#### 4. 구매 요청 처리
-
-대기 중인 요청 승인·취소 등 운영 화면.
-
-![4. 구매 요청](docs/image/admin-purchase-requests.png)
+![3. 템플릿 UID 복사](docs/image/admin-sweetbook-template2.png)
