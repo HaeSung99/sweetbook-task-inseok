@@ -35,12 +35,16 @@
 
 ### 1) MySQL
 
-백엔드는 MySQL에 연결합니다. 이미 로컬에서 MySQL이 실행 중이면 그것을 쓰면 되고, 그렇지 않으면 저장소의 Docker Compose로 MySQL만 띄울 수 있습니다.
+백엔드는 MySQL에 연결하며, 이 프로젝트에서는 Docker Compose로 MySQL 컨테이너를 실행하는 방식을 사용합니다.
+
+Docker가 설치되어 있지 않다면 먼저 공식 문서에서 설치해 주세요.
+
+- Docker Desktop 설치: https://www.docker.com/products/docker-desktop/
 
 ```bash
 cd ./backend
 
-# mysql이 켜져있지 않다면
+# MySQL 컨테이너 실행
 docker compose up -d mysql
 ```
 

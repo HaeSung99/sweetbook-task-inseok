@@ -18,27 +18,5 @@ services:
       interval: 5s
       retries: 10
 
-  api:
-    build: .
-    container_name: inseok-sweetbook-api
-    restart: always
-    depends_on:
-      mysql:
-        condition: service_healthy
-    ports:
-      - "3001:3001"
-    environment:
-      NODE_ENV: production
-      PORT: 3001
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_USERNAME: app
-      DB_PASSWORD: apppass
-      DB_DATABASE: sweetbook
-      TYPEORM_SYNC: "true"
-      JWT_SECRET: "your-very-secret-key"
-      SWEETBOOK_API_BASE_URL: "https://api.sweetbook.com"
-      SWEETBOOK_DEFAULT_BOOK_SPEC_UID: "SQUAREBOOK_HC"
-
 volumes:
   mysql_data:
